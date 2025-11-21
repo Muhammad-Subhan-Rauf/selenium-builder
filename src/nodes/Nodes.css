@@ -1,0 +1,55 @@
+.custom-node {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--node-bg);
+  border: 1px solid var(--node-border);
+  min-width: 180px;
+  color: var(--text-color);
+  font-size: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.custom-node:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.custom-node.selected {
+  border-color: var(--node-selected);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.custom-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--node-border);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.custom-node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.node-label {
+  color: var(--text-secondary);
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.node-value {
+  font-family: 'Fira Code', monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
