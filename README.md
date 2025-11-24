@@ -3,7 +3,6 @@
 
 A visual, drag-and-drop tool to generate robust Selenium (Python) automation scripts without writing code. Built with **React Flow** and **Vite**.
 
-![Project Preview](https://via.placeholder.com/800x400?text=Visual+Selenium+Builder+Preview)
 
 ## 🚀 Features
 
@@ -62,8 +61,8 @@ A visual, drag-and-drop tool to generate robust Selenium (Python) automation scr
 ### 2. Frontend Setup
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/visual-selenium-builder.git
-cd visual-selenium-builder
+git clone https://github.com/Muhammad-Subhan-Rauf/selenium-builder
+cd selenium-builder
 
 # Install dependencies
 npm install
