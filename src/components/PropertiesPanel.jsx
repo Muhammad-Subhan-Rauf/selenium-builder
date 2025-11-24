@@ -1,5 +1,3 @@
-// Original relative path: components/PropertiesPanel.jsx
-
 import React, { useEffect, useState } from 'react';
 import './PropertiesPanel.css';
 
@@ -101,6 +99,54 @@ export default function PropertiesPanel({ selectedNode, onChange }) {
                                 <input type="text" value={data.value || ''} onChange={(e) => handleChange('value', e.target.value)} placeholder="Hello World" />
                             </div>
                         )}
+                    </>
+                )}
+
+                {/* WAIT (NEW) */}
+                {selectedNode.type === 'wait' && (
+                    <div className="form-group">
+                        <label>Duration (Seconds)</label>
+                        <input 
+                            type="number" 
+                            min="0.1" 
+                            step="0.1" 
+                            value={data.duration || 1} 
+                            onChange={(e) => handleChange('duration', parseFloat(e.target.value))} 
+                        />
+                    </div>
+                )}
+
+                {/* SCREENSHOT (NEW) */}
+                {selectedNode.type === 'screenshot' && (
+                    <>
+                        <div className="form-group">
+                            <label>Directory</label>
+                            <input 
+                                type="text" 
+                                value={data.directory || './screenshots'} 
+                                onChange={(e) => handleChange('directory', e.target.value)} 
+                                placeholder="./screenshots"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Filename Prefix</label>
+                            <input 
+                                type="text" 
+                                value={data.filename || 'screenshot'} 
+                                onChange={(e) => handleChange('filename', e.target.value)} 
+                                placeholder="login_page"
+                            />
+                        </div>
+                        <div className="form-group checkbox-group">
+                            <label>
+                                <input 
+                                    type="checkbox" 
+                                    checked={data.autoIncrement || false} 
+                                    onChange={(e) => handleChange('autoIncrement', e.target.checked)} 
+                                />
+                                Auto Increment Counter (e.g., _1, _2)
+                            </label>
+                        </div>
                     </>
                 )}
 

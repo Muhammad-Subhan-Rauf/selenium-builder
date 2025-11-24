@@ -118,3 +118,42 @@ body {
   background: transparent;
   color: var(--text-secondary);
 }
+
+
+/* Add to index.css */
+.context-menu {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.ctx-menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.1s;
+}
+
+.ctx-menu-btn:hover:not(:disabled) {
+    background: #334155;
+}
+
+.ctx-menu-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ctx-menu-btn.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}

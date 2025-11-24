@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, MousePointer, Hand, CheckCircle, GitFork, Repeat } from 'lucide-react';
+import { Play, MousePointer, Hand, CheckCircle, GitFork, Repeat, Clock, Camera } from 'lucide-react';
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -45,6 +45,14 @@ export default function Sidebar() {
         <div className="dnd-node" onDragStart={(event) => onDragStart(event, 'interact')} draggable>
           <Hand size={18} color="#fb923c" />
           <span>Interact</span>
+        </div>
+        <div className="dnd-node" onDragStart={(event) => onDragStart(event, 'wait')} draggable>
+          <Clock size={18} color="#a8a29e" />
+          <span>Wait</span>
+        </div>
+        <div className="dnd-node" onDragStart={(event) => onDragStart(event, 'screenshot')} draggable>
+          <Camera size={18} color="#ec4899" />
+          <span>Screenshot</span>
         </div>
         <div className="dnd-node" onDragStart={(event) => onDragStart(event, 'assert')} draggable>
           <CheckCircle size={18} color="#c084fc" />
