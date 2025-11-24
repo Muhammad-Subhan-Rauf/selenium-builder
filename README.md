@@ -1,6 +1,4 @@
-Here is the updated `README.md` that reflects all the new features, the modular architecture, and the enhanced keyboard shortcuts.
 
-```markdown
 # Visual Selenium Builder
 
 A visual, drag-and-drop tool to generate robust Selenium (Python) automation scripts without writing code. Built with **React Flow** and **Vite**.
@@ -117,4 +115,3 @@ src/
 ## 📄 License
 
 MIT
-```
