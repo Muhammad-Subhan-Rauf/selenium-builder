@@ -1,13 +1,135 @@
-/* Update your existing TopBar.css or index.css */
+/* TopBar - Modern Glassmorphism Navbar */
 
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 0.625rem 1.25rem;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--panel-border);
+    gap: 1rem;
 }
 
+/* Brand / Logo Section */
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.topbar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, var(--accent-color) 0%, #8b5cf6 100%);
+    border-radius: 10px;
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.topbar-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    letter-spacing: -0.01em;
+}
+
+/* Actions Container */
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Button Groups */
+.topbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem;
+    border-radius: 8px;
+}
+
+/* Divider */
+.topbar-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--panel-border);
+    margin: 0 0.25rem;
+}
+
+/* Base Button Styles */
+.topbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.topbar-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-color);
+}
+
+.topbar-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.topbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Icon-only buttons */
+.topbar-btn.icon-only {
+    padding: 0.5rem;
+    min-width: 34px;
+}
+
+/* Primary Button */
+.topbar-btn.primary {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.topbar-btn.primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    transform: translateY(-1px);
+}
+
+.topbar-btn.primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Danger Button */
+.topbar-btn.danger {
+    color: #f87171;
+}
+
+.topbar-btn.danger:hover:not(:disabled) {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fca5a5;
+}
+
+/* Legacy button classes for compatibility */
 .btn-secondary {
     display: flex;
     align-items: center;
@@ -19,14 +141,19 @@
     cursor: pointer;
     background: transparent;
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--panel-border);
     transition: all 0.2s;
 }
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
+    color: var(--text-color);
     border-color: var(--text-secondary);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .btn-danger {

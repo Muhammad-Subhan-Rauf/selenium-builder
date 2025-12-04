@@ -4,6 +4,8 @@ import { Play } from 'lucide-react';
 import './Nodes.css';
 
 export default memo(({ data, selected }) => {
+    const hasHooks = data.clearCookies || data.clearLocalStorage || data.clearSessionStorage;
+
     return (
         <div className={`custom-node ${selected ? 'selected' : ''}`} style={{ borderColor: selected ? undefined : '#4ade80' }}>
             <div className="custom-node-header">
@@ -19,6 +21,14 @@ export default memo(({ data, selected }) => {
                     <div className="node-label">URL</div>
                     <div className="node-value">{data.url || 'https://example.com'}</div>
                 </div>
+                {hasHooks && (
+                    <div>
+                        <div className="node-label">Hooks</div>
+                        <div className="node-value" style={{color: '#4ade80'}}>
+                            {data.framework === 'cypress' ? 'beforeEach' : 'setUp'} enabled
+                        </div>
+                    </div>
+                )}
             </div>
             <Handle
                 type="source"

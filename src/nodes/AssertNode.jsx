@@ -4,6 +4,9 @@ import { CheckCircle } from 'lucide-react';
 import './Nodes.css';
 
 export default memo(({ data, selected }) => {
+    const condition = data.condition || 'Is Visible';
+    const isNetworkAssertion = condition === 'Network Status';
+
     return (
         <div className={`custom-node ${selected ? 'selected' : ''}`} style={{ borderColor: selected ? undefined : '#c084fc' }}>
             <div className="custom-node-header">
@@ -13,13 +16,30 @@ export default memo(({ data, selected }) => {
             <div className="custom-node-body">
                 <div>
                     <div className="node-label">Condition</div>
-                    <div className="node-value">{data.condition || 'Is Visible'}</div>
+                    <div className="node-value">{condition}</div>
                 </div>
-                {data.value && (
+                {isNetworkAssertion ? (
                     <div>
-                        <div className="node-label">Value</div>
-                        <div className="node-value">{data.value}</div>
+                        <div className="node-label">Alias / Status</div>
+                        <div className="node-value" style={{ color: '#06b6d4' }}>
+                            @{data.networkAlias || 'request'}: {data.expectedStatus || 200}
+                        </div>
                     </div>
+                ) : (
+                    <>
+                        {data.value && (
+                            <div>
+                                <div className="node-label">Value</div>
+                                <div className="node-value">{data.value}</div>
+                            </div>
+                        )}
+                        {data.propertyName && condition === 'Property Equals' && (
+                            <div>
+                                <div className="node-label">Property</div>
+                                <div className="node-value">{data.propertyName}</div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

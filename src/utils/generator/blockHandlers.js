@@ -1,12 +1,25 @@
-import { getConnectedElement, getOutgoerByHandle, getPythonSelector } from './helpers';
+// Original relative path: utils/generator/blockHandlers.js
+
+import { getConnectedElement, getOutgoerByHandle, getPythonSelector, formatPythonValue } from './helpers';
 
 export const handlers = {
+
+    // --- SET VARIABLE ---
+    set_variable: (node, context) => {
+        const { indent } = context;
+        const name = node.data.varName || 'my_var';
+        const rawVal = node.data.varValue || '';
+        
+        // Use formatPythonValue to handle strings vs expressions (=)
+        const val = formatPythonValue(rawVal);
+        
+        return `${indent}self.vars["${name}"] = ${val}\n` + context.processNext(node);
+    },
 
     // --- INTERACT ---
     interact: (node, context) => {
         const { edges, nodes, indent } = context;
         const el = getConnectedElement(node, edges, nodes);
-
         let output = "";
 
         if (!el) {
@@ -19,51 +32,25 @@ export const handlers = {
 
         // Determine action
         const action = node.data.action || "Click";
-        const value = node.data.value || "";
+        const rawValue = node.data.value || "";
+        const saveTo = node.data.saveTo; // For "Get Text"
 
-        // ---------------------------
-        // Helper to generate readable element name
-        // ---------------------------
-        const getReadableName = (el) => {
-            let name = el.name?.trim();
-            if (name) return name;
+        // Format value for Type action (handle variables)
+        const pyValue = formatPythonValue(rawValue);
 
-            const tag = el.tagName?.toLowerCase();
-            const label = el.text || el.innerText || el.value || "";
+        // Element Name for logging
+        const elName = el.name || "element";
 
-            // Start forming a readable name
-            if (tag) {
-                name = label ? `${tag}: ${label}` : tag;
-            } else {
-                name = "element";
-            }
-
-            // Add selector details for uniqueness
-            if (el.selectorType && el.selectorValue) {
-                name += ` (${el.selectorType}: ${el.selectorValue})`;
-            }
-
-            return name;
-        };
-
-        const elName = getReadableName(el);
-
-        // Log the action cleanly
         output += `${indent}log_step("Action: ${action} on '${elName}'")\n`;
-
-        // ---------------------------
-        // Python action generation
-        // ---------------------------
         const base = `${indent}driver.find_element(${sel})`;
 
         switch (action) {
-
             case "Click":
                 output += `${base}.click()\n`;
                 break;
 
             case "Type":
-                output += `${base}.send_keys("${value}")\n`;
+                output += `${base}.send_keys(${pyValue})\n`;
                 break;
 
             case "Clear":
@@ -75,8 +62,16 @@ export const handlers = {
                 output += `${indent}webdriver.ActionChains(driver).move_to_element(element).perform()\n`;
                 break;
 
+            case "Get Text":
+                output += `${indent}txt_val = ${base}.text\n`;
+                if(saveTo) {
+                    output += `${indent}self.vars["${saveTo}"] = txt_val\n`;
+                    output += `${indent}log_info(f"Saved text '{txt_val}' to variable '${saveTo}'")\n`;
+                }
+                break;
+
             default:
-                output += `${indent}log_info("Unknown action '${action}' — no operation performed")\n`;
+                output += `${indent}log_info("Unknown action '${action}'")\n`;
         }
 
         return output + context.processNext(node);
@@ -85,14 +80,34 @@ export const handlers = {
     // --- WAIT / SLEEP ---
     wait: (node, context) => {
         const { indent } = context;
-        const duration = node.data.duration || 1;
+        const waitType = node.data.waitType || 'time';
 
-        // No need to spam logs for short waits, but useful for long ones
-        output = '';
-        if (duration >= 1) {
-            output += `${indent}log_step("Waiting for ${duration} seconds...")\n`;
+        let output = '';
+
+        // Handle network wait type (Selenium doesn't support this natively)
+        if (waitType === 'network') {
+            const alias = node.data.networkAlias || 'request';
+            output += `${indent}# Wait for network request '@${alias}'\n`;
+            output += `${indent}# Note: Selenium does not support native network wait.\n`;
+            output += `${indent}# Consider using selenium-wire or explicit waits instead.\n`;
+            output += `${indent}time.sleep(1)  # Fallback: wait 1 second\n`;
+            return output + context.processNext(node);
         }
-        output += `${indent}time.sleep(${duration})\n`;
+
+        const rawDuration = node.data.duration || 1;
+        const pyDuration = formatPythonValue(rawDuration);
+
+        // If it's a hardcoded number, we can log a message. If it's a variable, difficult to know value at generation time.
+        if (!String(rawDuration).includes('$')) {
+             if (parseFloat(rawDuration) >= 1) {
+                output += `${indent}log_step("Waiting for ${rawDuration} seconds...")\n`;
+             }
+        } else {
+             output += `${indent}log_step(f"Waiting for {${pyDuration}} seconds...")\n`;
+        }
+
+        // Wrap in float() safely
+        output += `${indent}time.sleep(float(${pyDuration}))\n`;
 
         return output + context.processNext(node);
     },
@@ -126,28 +141,61 @@ export const handlers = {
         const { edges, nodes, indent } = context;
         const el = getConnectedElement(node, edges, nodes);
         const cond = node.data.condition || 'Is Visible';
-        const val = node.data.value || '';
+        const rawVal = node.data.value || '';
+        const pyVal = formatPythonValue(rawVal);
         const printRes = node.data.printResults || false;
 
         let check = '';
         let msg = '';
         let output = '';
 
+        // Element-based assertions
         if (cond === 'Is Visible' && el) {
             check = `driver.find_element(${getPythonSelector(el.selectorType, el.selectorValue)}).is_displayed()`;
-            msg = `Element '${el.name || el.selectorValue}' is visible`;
+            msg = `Element visible`;
         } else if (cond === 'Contains Text' && el) {
             const sel = getPythonSelector(el.selectorType, el.selectorValue);
             output += `${indent}el = driver.find_element(${sel})\n`;
             output += `${indent}txt = el.text or el.get_attribute("value") or ""\n`;
-            check = `"${val}" in txt`;
-            msg = `Element '${el.name || el.selectorValue}' contains '${val}'`;
-        } else if (cond === 'URL Contains') {
-            check = `"${val}" in driver.current_url`;
-            msg = `URL contains '${val}'`;
-        } else if (cond === 'Title Equals') {
-            check = `driver.title == "${val}"`;
-            msg = `Title is '${val}'`;
+            check = `str(${pyVal}) in txt`;
+            msg = `Element contains text`;
+        } else if (cond === 'Has Class' && el) {
+            const sel = getPythonSelector(el.selectorType, el.selectorValue);
+            const className = node.data.value || '';
+            output += `${indent}el = driver.find_element(${sel})\n`;
+            output += `${indent}el_classes = el.get_attribute("class") or ""\n`;
+            check = `"${className}" in el_classes.split()`;
+            msg = `Element has class '${className}'`;
+        } else if (cond === 'Property Equals' && el) {
+            const sel = getPythonSelector(el.selectorType, el.selectorValue);
+            const propName = node.data.propertyName || 'value';
+            output += `${indent}el = driver.find_element(${sel})\n`;
+            output += `${indent}prop_val = el.get_attribute("${propName}")\n`;
+            check = `str(prop_val) == str(${pyVal})`;
+            msg = `Element property '${propName}' equals expected`;
+        }
+        // URL-based assertions
+        else if (cond === 'URL Contains') {
+            check = `str(${pyVal}) in driver.current_url`;
+            msg = `URL contains text`;
+        } else if (cond === 'URL Matches Regex') {
+            let pattern = node.data.value || '';
+            // Remove surrounding slashes if present
+            if (pattern.startsWith('/') && pattern.endsWith('/')) {
+                pattern = pattern.slice(1, -1);
+            }
+            output += `${indent}import re\n`;
+            check = `re.search(r"${pattern}", driver.current_url)`;
+            msg = `URL matches regex`;
+        }
+        // Network assertions (not supported in Selenium)
+        else if (cond === 'Network Status') {
+            const alias = node.data.networkAlias || 'request';
+            const expectedStatus = node.data.expectedStatus || 200;
+            output += `${indent}# Assert Network Status: @${alias} == ${expectedStatus}\n`;
+            output += `${indent}# Note: Selenium does not support native network assertion.\n`;
+            output += `${indent}# Consider using selenium-wire for network inspection.\n`;
+            return output + context.processNext(node);
         }
 
         if (check) {
@@ -168,7 +216,8 @@ export const handlers = {
         const { edges, nodes, indent, indentLevel, processNodeFn } = context;
         const el = getConnectedElement(node, edges, nodes);
         const cond = node.data.condition || 'Is Visible';
-        const val = node.data.value || '';
+        const rawVal = node.data.value || '';
+        const pyVal = formatPythonValue(rawVal);
         let output = '';
         let ifLine = 'if True:';
 
@@ -182,9 +231,9 @@ export const handlers = {
             const sel = getPythonSelector(el.selectorType, el.selectorValue);
             output += `${indent}try: el_txt = driver.find_element(${sel}).text\n`;
             output += `${indent}except: el_txt = ""\n`;
-            ifLine = `if "${val}" in el_txt:`;
+            ifLine = `if str(${pyVal}) in el_txt:`;
         } else if (cond === 'URL Contains') {
-            ifLine = `if "${val}" in driver.current_url:`;
+            ifLine = `if str(${pyVal}) in driver.current_url:`;
         }
 
         output += `${indent}${ifLine}\n`;
@@ -210,10 +259,12 @@ export const handlers = {
         const loopType = node.data.loopType || 'Counter';
 
         if (loopType === 'Counter') {
-            const count = node.data.count || 1;
-            output += `${indent}log_info("Starting Loop (${count} iterations)")\n`;
-            output += `${indent}for i in range(${count}):\n`;
-            output += `${indent}    log_info(f"--- Loop Iteration {i+1}/{count} ---")\n`;
+            const rawCount = node.data.count || 1;
+            const pyCount = formatPythonValue(rawCount);
+            
+            output += `${indent}log_info(f"Starting Loop ({${pyCount}} iterations)")\n`;
+            output += `${indent}for i in range(int(${pyCount})):\n`;
+            output += `${indent}    log_info(f"--- Loop Iteration {i+1} ---")\n`;
         } else {
             output += `${indent}log_info("Starting While Loop")\n`;
             const cond = node.data.condition || 'Is Visible';
@@ -249,5 +300,66 @@ export const handlers = {
     // --- START SESSION ---
     start_session: (node, context) => {
         return context.processNext(node);
+    },
+
+    // --- NETWORK INTERCEPT ---
+    // Note: Selenium doesn't have native network interception like Cypress
+    // This generates a comment placeholder for manual implementation
+    network: (node, context) => {
+        const { indent } = context;
+        const method = node.data.method || 'GET';
+        const urlPattern = node.data.urlPattern || '**/api/*';
+        const alias = node.data.alias || 'request';
+        const mockResponse = node.data.mockResponse || false;
+
+        let output = '';
+        output += `${indent}# Network Intercept: ${method} ${urlPattern} (alias: ${alias})\n`;
+        output += `${indent}# Note: Selenium does not support native network interception.\n`;
+        output += `${indent}# Consider using selenium-wire or mitmproxy for request mocking.\n`;
+
+        if (mockResponse) {
+            const statusCode = node.data.statusCode || 200;
+            output += `${indent}# Mock Response: Status ${statusCode}\n`;
+        }
+
+        return output + context.processNext(node);
+    },
+
+    // --- LOAD FIXTURE ---
+    load_fixture: (node, context) => {
+        const { indent } = context;
+        const filePath = node.data.filePath || 'data.json';
+        const varName = node.data.varName || 'fixtureData';
+
+        let output = '';
+        output += `${indent}# Load fixture from ${filePath}\n`;
+        output += `${indent}import json\n`;
+        output += `${indent}with open("${filePath}", "r") as f:\n`;
+        output += `${indent}    self.vars["${varName}"] = json.load(f)\n`;
+        output += `${indent}log_step(f"Loaded fixture '{filePath}' into variable '${varName}'")\n`;
+
+        return output + context.processNext(node);
+    },
+
+    // --- CUSTOM COMMAND ---
+    // For Python/Selenium, this generates a function call
+    // Assumes the function is defined elsewhere in the test file or imported
+    custom_command: (node, context) => {
+        const { indent } = context;
+        const commandName = node.data.commandName || 'my_command';
+        const rawArgs = node.data.arguments || '';
+
+        // Parse and format arguments
+        const args = rawArgs.split(',')
+            .map(arg => arg.trim())
+            .filter(Boolean)
+            .map(arg => formatPythonValue(arg))
+            .join(', ');
+
+        let output = '';
+        output += `${indent}# Custom command: ${commandName}\n`;
+        output += `${indent}${commandName}(${args})\n`;
+
+        return output + context.processNext(node);
     }
 };

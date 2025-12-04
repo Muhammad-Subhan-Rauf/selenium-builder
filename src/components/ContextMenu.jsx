@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Copy, Scissors, Clipboard, Trash2 } from 'lucide-react';
 
 export default function ContextMenu({ 

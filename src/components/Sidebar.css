@@ -6,6 +6,7 @@
   padding: 1rem;
   border-right: 1px solid var(--panel-border);
   background: var(--panel-bg);
+  overflow-y: auto;
 }
 
 .sidebar-title {
